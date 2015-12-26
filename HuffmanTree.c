@@ -33,6 +33,7 @@ typedef struct
     int LChild;
     int RChild;
 }HufNode;
+
 //初始化哈夫曼数的结点
 void InitHuffTree(int *W,HufNode *h)
 {
@@ -125,34 +126,6 @@ void PrintHufTree(HufNode *h)
         printf("%d\t%d\t%d\t%d\t%d\n",i+1,h[i].Weight,h[i].Parent,h[i].LChild,h[i].RChild);
     }
 }
-/*
-//递归方法创建二叉树(有返回值)
-Bitree Created_2(HufNode *h)
-{
-    int temp;
-    temp=
-    if(temp=='^')
-    {
-        return NULL;
-    }
-    Bitree s;
-    s=(Bitree)malloc(sizeof(BiNode));
-    s->data=temp;
-    s->LChild=Created_2(h);
-    s->RChild=Created_2(h);
-    return s;
-}
-//先序遍历二叉树
-void PreOrder(Bitree root)
-{
-    if(root)
-    {
-        printf("%c\t",root->data);
-        PreOrder(root->LChild);
-        PreOrder(root->RChild);
-    }
-}
-*/
 void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
 {
     int i,j,k,m;
@@ -192,7 +165,7 @@ int main()
 {
     HufNode h[H];
     char ch[N];
-    int w[N]={1,3,6,9};
+    int w[N]={1,1,6,9};
     char sign[N]={'A','B','C','D'};
     InitHuffTree(w,h);
     CreateHuffTree(h);
