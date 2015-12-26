@@ -109,7 +109,6 @@ void CreateHuffTree(HufNode *h)
     int  n1,n2;
     for(i=N;i<H;i++)
     {
-
         FindMin(i,h,&n1,&n2);
         h[i].Weight=h[n1].Weight+h[n2].Weight;
         h[i].LChild=n1;
@@ -171,7 +170,6 @@ int main()
     CreateHuffTree(h);
     PrintHufTree(h);
     int i;
-
     for(i=0;i<N;i++)
     {
         memset(ch,'\0',sizeof(ch));
