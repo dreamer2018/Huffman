@@ -198,7 +198,7 @@ void readFile(char *str)
     fclose(fp);
 }
 //将内容写入到文件中
-void writeFile(char *str)
+void writeFile(int *str)
 {
     int i;
     FILE *fp;
@@ -254,12 +254,36 @@ void getCode(HufNode *h,Code *code,int n)
         HuffmanCode(h,code[i].ascii_code,h[i],i);
     }
 }
+//解析字符，即就是将字符解析成编码
+char *resolveChar(Code *code,char *c,int n)
+{
+    int i;
+    for(i=0;i<n;i++)
+    {
+        if(code[i].ascii==*c)
+        {
+            return code[i].ascii_code;
+        }
+    }
+    return c;
+}
+int solveChar(Code *code,char *c,int n)
+{
+    int i;
+    for(i=0;i<n;i++)
+    {
+        if(!strcmp(code[i].ascii_code,c))
+        {
+            return code[i].ascii;
+        }
+    }
+}
 /*  将压缩后的内容写入到文件中，文件分为三个部分：
  *  第一部分（文件第一行）：记录编码的个数和源文件名，使用fscanf()写入，取出是用fprintf读取出
  *  第二部分（文件第二行到n+1行）:记录编码表的内容使用fscanf()函数写入，使用fprintf读取出
  *  第三部分（第n+2行到末尾）：记录编码后的内容
  */
-void writeCode(Code *code,int n,char *filename)
+void writeCode(Code *code,int n,char *filename,char *str)
 {
     int i;
     FILE *fp;
@@ -267,9 +291,13 @@ void writeCode(Code *code,int n,char *filename)
     fprintf(fp,"%d %s",n,filename);
     for(i=0;i<n;i++)
     {
-        fprintf(fp,"%d %s",code[i].ascii,code[i].ascii_code)
+        fprintf(fp,"%d %s\n",code[i].ascii,code[i].ascii_code);
     }
-
+    for(i=0;str[i]!='\0';i++)
+    {
+        fprintf(fp,"%s\n",resolveChar(code,&str[i],n));
+    }
+    fclose(fp);
 }
 //读取出文件里的文件名和n值
 void readCount(int *n,char *filename)
@@ -284,8 +312,30 @@ void readCount(int *n,char *filename)
     fclose(fp);
 }
 //读取压缩后的文件内容，并将编码解析，写入文件
-void readCode(Code *code)
-{}
+int readCode(Code *code,int *str)
+{
+    int i,n;
+    char temp[8];
+    bzero(temp,sizeof(temp));
+    char filename[256];
+    FILE *fp;
+    fp=fopen("1.txt.code","r");
+    if(fp==NULL)
+    {
+        return 0;
+    }
+    fscanf(fp,"%d %s",n,filename);
+    for(i=0;i<n;i++)
+    {
+        fscanf(fp,"%d %s\n",&code[i].ascii,code[i].ascii_code);
+    }
+    for(i=0;fscanf(fp,"%s",temp);i++)
+    {
+        str[i]=solveChar(code,temp,n);
+    }
+    fclose(fp);
+    return 1;
+}
 int main(int argc,char *argv[])
 {
     //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
