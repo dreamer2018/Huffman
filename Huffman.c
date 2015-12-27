@@ -45,7 +45,7 @@ typedef struct
 }Code;
 
 //初始化哈夫曼数的结点
-void InitHuffTree(Code *W,HufNode *h,int n)
+void initHuffTree(Code *W,HufNode *h,int n)
 {
     int i;
     int m=2*n-1;
@@ -65,7 +65,7 @@ void InitHuffTree(Code *W,HufNode *h,int n)
     }
 }
 //找出权值最小的两个
-void FindMin(int n,HufNode *h,int *n1,int *n2)
+void findMin(int n,HufNode *h,int *n1,int *n2)
 {
     int i,j,k=0;
     HufNode h1,h2;
@@ -114,14 +114,14 @@ void FindMin(int n,HufNode *h,int *n1,int *n2)
     }
 }
 //创建哈夫曼数
-void CreateHuffTree(HufNode *h,int n)
+void createHuffTree(HufNode *h,int n)
 {
     int i;
     int m=2*n-1;
     int  n1,n2;
     for(i=n;i<m;i++)
     {
-        FindMin(i,h,&n1,&n2);
+        findMin(i,h,&n1,&n2);
         h[i].Weight=h[n1].Weight+h[n2].Weight;
         h[i].LChild=n1;
         h[i].RChild=n2;
@@ -129,7 +129,7 @@ void CreateHuffTree(HufNode *h,int n)
     }
 }
 //打印出哈夫曼树
-void PrintHufTree(HufNode *h,int n)
+void printHufTree(HufNode *h,int n)
 {
     int i;
     for(i=0;i<(2*n-1);i++)
@@ -175,7 +175,7 @@ void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
 }
 
 //读取出文件内容
-void ReadFile(char *str)
+void readFile(char *str)
 {
     int i;
     FILE *fp;
@@ -198,7 +198,7 @@ void ReadFile(char *str)
     fclose(fp);
 }
 //将内容写入到文件中
-void WriteFile(char *str)
+void writeFile(char *str)
 {
     int i;
     FILE *fp;
@@ -210,7 +210,7 @@ void WriteFile(char *str)
     fclose(fp);
 }
 //计算出每个ASCII字符出现的次数，并返回出现的ASCII字符个数
-int CountNum(char *str,int *count)
+int countNum(char *str,int *count)
 {
     int i,c=0;
     for(i=0;str[i]!='\0';i++)
@@ -227,7 +227,7 @@ int CountNum(char *str,int *count)
     return c;
 }
 //将权值不为0的，及需要编码的内容保存到code里面
-void CountNull(int *count,Code *code,int n)
+void countNull(int *count,Code *code,int n)
 {
     int i,j;
     for(i=0,j=-1;i<127 && j<=n ;i++)
@@ -254,16 +254,39 @@ void getCode(HufNode *h,Code *code,int n)
         HuffmanCode(h,code[i].ascii_code,h[i],i);
     }
 }
-/*将压缩后的内容写入到文件中，文件分为三个部分：
- *  第一部分（文件第一行）：记录编码的个数
- *  第二部分
- *
+/*  将压缩后的内容写入到文件中，文件分为三个部分：
+ *  第一部分（文件第一行）：记录编码的个数和源文件名，使用fscanf()写入，取出是用fprintf读取出
+ *  第二部分（文件第二行到n+1行）:记录编码表的内容使用fscanf()函数写入，使用fprintf读取出
+ *  第三部分（第n+2行到末尾）：记录编码后的内容
  */
-void WriteCode()
+void writeCode(Code *code,int n,char *filename)
 {
+    int i;
+    FILE *fp;
+    fp=fopen("1.txt.code","w");
+    fprintf(fp,"%d %s",n,filename);
+    for(i=0;i<n;i++)
+    {
+        fprintf(fp,"%d %s",code[i].ascii,code[i].ascii_code)
+    }
 
 }
-int main()
+//读取出文件里的文件名和n值
+void readCount(int *n,char *filename)
+{
+    FILE *fp;
+    fp=fopen("1.txt.code","r");
+    if(fp==NULL)
+    {
+        *n=0;
+    }
+    fscanf(fp,"%d %s",n,filename);
+    fclose(fp);
+}
+//读取压缩后的文件内容，并将编码解析，写入文件
+void readCode(Code *code)
+{}
+int main(int argc,char *argv[])
 {
     //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
     int i,n,m;
@@ -274,22 +297,22 @@ int main()
     //将数组全部内容置为0
     bzero(count,sizeof(count));  //或者 memset(count,0,sizeof(count));
     //从文件中读取字符
-    ReadFile(str);
+    readFile(str);
     //记录文件中的ASCII种类数
-    n=CountNum(str,count);
+    n=countNum(str,count);
     //printf("%d\n",n);
     m=2*n-1;
     //创建结构体数组保存编码好的码值
     Code code[n];
     //将不为空的ASCII码值存入数组中
-    CountNull(count,code,n);
+    countNull(count,code,n);
     //创建一个哈夫曼树
     HufNode h[m];
     //初始化哈夫曼树
-    InitHuffTree(code,h,n);
+    initHuffTree(code,h,n);
     //创建哈夫曼树
-    CreateHuffTree(h,n);
-    PrintHufTree(h,n);
+    createHuffTree(h,n);
+    printHufTree(h,n);
     getCode(h,code,n);
     for(i=0;i<n;i++)
     {
