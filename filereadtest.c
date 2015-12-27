@@ -43,6 +43,17 @@ void WriteFile(char *str)
     }
     fclose(fp);
 }
+void WriteFile2()
+{
+    int i;
+    FILE *fp;
+    fp=fopen("1.txt.tmp2","w");
+    for(i=65;i<97;i++)
+    {
+        fputc(i,fp);
+    }
+    fclose(fp);
+}
 void CountNum(char *str,int *cout)
 {
     int i;
@@ -53,7 +64,9 @@ void CountNum(char *str,int *cout)
 }
 int main()
 {
+    
     int i=0;
+    /*
     int cout[127];
     bzero(cout,sizeof(cout));
     char str[100];
@@ -64,5 +77,6 @@ int main()
     {
         if(cout[i]!=0)
             printf("%c : %d \n",i+1,cout[i]);
-    }
+    }*/
+    WriteFile2();
 }
