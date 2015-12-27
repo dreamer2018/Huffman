@@ -404,7 +404,7 @@ void errorInput()
 int main(int argc,char *argv[])
 {
 
-    if(argc>=3)
+    if(argc==3)
     {
         if(!strncmp(argv[1],"-d",2))
         {
@@ -414,7 +414,13 @@ int main(int argc,char *argv[])
         {   
             compressFile(argv[2]);
         }
-        else if(!strncmp(argv[1],"-v",2))
+        {
+            errorInput();
+        }
+    }
+    else if(argc==2)
+    {
+        if(!strncmp(argv[1],"-v",2))
         {
             printf("zp version 0.3.1 20151227\n");
         }
