@@ -38,13 +38,13 @@ typedef struct
 }Code;
 
 //初始化哈夫曼数的结点
-void initHuffTree(int *W,HufNode *h,int n)
+void initHuffTree(Code *code,HufNode *h,int n)
 {
     int i;
     int m=2*n-1;
     for(i=0;i<n;i++)
     {
-        h[i].Weight=W[i];
+        h[i].Weight=code[i].weight;
         h[i].Parent=0;
         h[i].LChild=0;
         h[i].RChild=0;
@@ -170,19 +170,31 @@ void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
         c[m]=temp;
     }
 }
-int countNull(int *Weight)
+int countZero(int *Weight)
 {
     int i,j;
     for(i=0,j=0;i<256;i++)
     {
-        if(Weight!=0)
+        if(Weight[i]!=0)
         {
             j++;
         }
     }
     return j;
 }
-
+int countWeight(Code *code,int *Weight)
+{
+    int i,j;
+    for(i=0,j=-1;i<256;i++)
+    {
+        if(Weight[i]!=0)
+        {
+            j++;
+            code[j].ascii=i;
+            code[j].weight=Weight[i];
+        }
+    }
+}
 void readFile(int *Weigh)
 {
     int i;
@@ -209,9 +221,25 @@ int main()
     int Weight[256];
     bzero(Weight,sizeof(Weight));
     readFile(Weight);
-    n=countNull(Weight);
+    for(i=0;i<256;i++)
+    {
+        if(Weight[i]!=0)
+        {
+            printf("%d\n",Weight[i]);
+        }
+    }
+    n=countZero(Weight);
     m=2*n-1;
+    printf("%d\n",n);
+    Code code[n];
+    countWeight(code,Weight);
+    for(i=0;i<n;i++)
+    {
+        printf("%d %d\n",code[i].ascii,code[i].weight);
+    }
     HufNode h[m];
-    initHuffTree(Weight,h,n);
+    initHuffTree(code,h,n);
     createHuffTree(h,n);
+    printHufTree(h,n);
+
 }
