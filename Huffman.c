@@ -39,7 +39,7 @@ typedef struct
 //定义哈夫曼编码结构体
 typedef struct
 {
-    int ascii;
+    char ascii;
     int weight;
     char ascii_code[8];  //ASCII码为127个，最多用7个字符就可以全部编码，故用长度为8的字符数组保存
 }Code;
@@ -198,7 +198,7 @@ void readFile(char *str)
     fclose(fp);
 }
 //将内容写入到文件中
-void writeFile(int *str)
+void writeFile(char *str)
 {
     int i;
     FILE *fp;
@@ -267,7 +267,7 @@ char *resolveChar(Code *code,char *c,int n)
     }
     return c;
 }
-int solveChar(Code *code,char *c,int n)
+char solveChar(Code *code,char *c,int n)
 {
     int i;
     for(i=0;i<n;i++)
@@ -291,7 +291,7 @@ void writeCode(Code *code,int n,char *filename,char *str)
     fprintf(fp,"%d %s",n,filename);
     for(i=0;i<n;i++)
     {
-        fprintf(fp,"%d %s\n",code[i].ascii,code[i].ascii_code);
+        fprintf(fp,"%c %s\n",code[i].ascii,code[i].ascii_code);
     }
     for(i=0;str[i]!='\0';i++)
     {
@@ -312,7 +312,7 @@ void readCount(int *n,char *filename)
     fclose(fp);
 }
 //读取压缩后的文件内容，并将编码解析，写入文件
-int readCode(Code *code,int *str)
+int readCode(Code *code,char *str)
 {
     int i,n;
     char temp[8];
@@ -324,10 +324,10 @@ int readCode(Code *code,int *str)
     {
         return 0;
     }
-    fscanf(fp,"%d %s",n,filename);
+    fscanf(fp,"%d %s",&n,filename);
     for(i=0;i<n;i++)
     {
-        fscanf(fp,"%d %s\n",&code[i].ascii,code[i].ascii_code);
+        fscanf(fp,"%c %s\n",&code[i].ascii,code[i].ascii_code);
     }
     for(i=0;fscanf(fp,"%s",temp);i++)
     {
@@ -338,6 +338,7 @@ int readCode(Code *code,int *str)
 }
 int main(int argc,char *argv[])
 {
+    /*
     //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
     int i,n,m;
     //数组下标加一就代表对应得ASCII字符，数组内存储的是那个ASCII字符出现的次数
@@ -362,10 +363,22 @@ int main(int argc,char *argv[])
     initHuffTree(code,h,n);
     //创建哈夫曼树
     createHuffTree(h,n);
-    printHufTree(h,n);
+    //printHufTree(h,n);
     getCode(h,code,n);
+    
     for(i=0;i<n;i++)
     {
         printf("%c: %s\t\t %d\n",code[i].ascii,code[i].ascii_code,code[i].weight);
     }
+    writeCode(code,n,"1.txt",str);
+    */
+    int n;
+    char filename[128];
+    memset(filename,'\0',sizeof(filename));
+    char str[MAX];
+    memset(str,'\0',sizeof(str));
+    readCount(&n,filename);
+    Code code[n];
+    readCode(code,str);
+    writeFile(str);
 }
