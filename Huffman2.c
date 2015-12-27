@@ -35,7 +35,7 @@ typedef struct
 {
     char ascii;
     int weight;
-    char ascii_code[8];  //ASCII码为127个，最多用7个字符就可以全部编码，故用长度为8的字符数组保存
+    char ascii_code[8];  //八位二进制的最多组合形式就为256种，所以最长也就为8位
 }Code;
 
 //初始化哈夫曼数的结点
@@ -172,29 +172,37 @@ void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
     }
 }
 
+void countWeigh(int *weight,char ch)
+{
+    int i;
+    for(i=0;i<256;i++)
+    {
+        if(ch==weight[i])
+        {
+            weight[i]++;
+        }
+    }
+}
 //读取出文件内容,返回值为文件的字符个数
-int readFile(char *str,char *filename)
+
+void readFile(int *Weigh)
 {
     int i;
     FILE *fp;
     char ch;
-    fp=fopen(filename,"r");
-    if(fp==NULL)
+    fp=fopen("1.txt","r");
+    while(!feof(fp))
     {
-        printf("Not Found %s",filename);
-    }
-    for(i=0;;i++)
-    {
-        ch=getc(fp);
-        if(ch==EOF)
+        fread(&ch,1,1,fp);
+        for(i=0;i<256;i++)
         {
-            str[i]='\0';
-            break;
+            if(ch==i)
+            {
+                Weigh[i]++;
+                break;
+            }
         }
-        str[i]=ch;
     }
-    fclose(fp);
-    return i;
 }
 
 //将内容写入到文件中
@@ -209,7 +217,6 @@ void writeFile(char *str,char *filename,int len)
     }
     fclose(fp);
 }
-
 //计算出每个ASCII字符出现的次数，并返回出现的ASCII字符个数
 int countNum(char *str,int *count)
 {
@@ -347,40 +354,8 @@ int readCode(Code *code,char *str,char *filename1)
 }
 void compressFile(char *filename)
 {
-    //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
-    int i,n,m,len;
-    //数组下标加一就代表对应得ASCII字符，数组内存储的是那个ASCII字符出现的次数
-    int count[127];
-    //定义一个字符数组，用于保存从文件中读取的字符个数
-    char str[MAX];
-    //将数组全部内容置为0
-    bzero(count,sizeof(count));  //或者 memset(count,0,sizeof(count));
-    //从文件中读取字符
-    len=readFile(str,filename);
-    //记录文件中的ASCII种类数
-    n=countNum(str,count);
-    //printf("%d\n",n);
-    m=2*n-1;
-    //创建结构体数组保存编码好的码值
-    Code code[n];
-    //将不为空的ASCII码值存入数组中
-    countNull(count,code,n);
-    //创建一个哈夫曼树
-    HufNode h[m];
-    //初始化哈夫曼树
-    initHuffTree(code,h,n);
-    //创建哈夫曼树
-    createHuffTree(h,n);
-    //printHufTree(h,n);
-    getCode(h,code,n);
-    char filename1[128];
-    bzero(filename1,sizeof(filename1));
-    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
-    {
-        filename1[i]=filename[i];
-    }
-    strcat(filename1,".code");
-    writeCode(code,n,len,filename,filename1,str);
+    int weight[256];
+    bzero(weight,sizeof(weight));
 }
 void uncompressFile(char *filename2)
 {
