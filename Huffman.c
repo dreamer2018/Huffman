@@ -174,8 +174,8 @@ void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
     }
 }
 
-//读取出文件内容
-void readFile(char *str)
+//读取出文件内容,返回值为文件的字符个数
+int readFile(char *str)
 {
     int i;
     FILE *fp;
@@ -196,6 +196,7 @@ void readFile(char *str)
         str[i]=ch;
     }
     fclose(fp);
+    return i;
 }
 //将内容写入到文件中
 void writeFile(char *str)
@@ -283,24 +284,24 @@ char solveChar(Code *code,char *c,int n)
  *  第二部分（文件第二行到n+1行）:记录编码表的内容使用fscanf()函数写入，使用fprintf读取出
  *  第三部分（第n+2行到末尾）：记录编码后的内容
  */
-void writeCode(Code *code,int n,char *filename,char *str)
+void writeCode(Code *code,int n,int len,char *filename,char *str)
 {
     int i;
     FILE *fp;
     fp=fopen("1.txt.code","w");
-    fprintf(fp,"%d %s",n,filename);
+    fprintf(fp,"%d %d %s",n,len,filename);
     for(i=0;i<n;i++)
     {
         fprintf(fp,"%c %s\n",code[i].ascii,code[i].ascii_code);
     }
-    for(i=0;str[i]!='\0';i++)
+    for(i=0;i<len;i++)
     {
         fprintf(fp,"%s\n",resolveChar(code,&str[i],n));
     }
     fclose(fp);
 }
 //读取出文件里的文件名和n值
-void readCount(int *n,char *filename)
+void readCount(int *n,int *len,char *filename)
 {
     FILE *fp;
     fp=fopen("1.txt.code","r");
@@ -308,13 +309,13 @@ void readCount(int *n,char *filename)
     {
         *n=0;
     }
-    fscanf(fp,"%d %s",n,filename);
+    fscanf(fp,"%d %d %s",n,len,filename);
     fclose(fp);
 }
 //读取压缩后的文件内容，并将编码解析，写入文件
 int readCode(Code *code,char *str)
 {
-    int i,n;
+    int i,n,len;
     char temp[8];
     bzero(temp,sizeof(temp));
     char filename[256];
@@ -324,13 +325,14 @@ int readCode(Code *code,char *str)
     {
         return 0;
     }
-    fscanf(fp,"%d %s",&n,filename);
+    fscanf(fp,"%d %d %s",&n,&len,filename);
     for(i=0;i<n;i++)
     {
         fscanf(fp,"%c %s\n",&code[i].ascii,code[i].ascii_code);
     }
-    for(i=0;fscanf(fp,"%s",temp);i++)
+    for(i=0;i<len;i++)
     {
+        fscanf(fp,"%s\n",temp);
         str[i]=solveChar(code,temp,n);
     }
     fclose(fp);
@@ -338,9 +340,11 @@ int readCode(Code *code,char *str)
 }
 int main(int argc,char *argv[])
 {
-    /*
+    int sign=1;
+    if(sign==1)
+    {
     //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
-    int i,n,m;
+    int i,n,m,len;
     //数组下标加一就代表对应得ASCII字符，数组内存储的是那个ASCII字符出现的次数
     int count[127];
     //定义一个字符数组，用于保存从文件中读取的字符个数
@@ -348,7 +352,7 @@ int main(int argc,char *argv[])
     //将数组全部内容置为0
     bzero(count,sizeof(count));  //或者 memset(count,0,sizeof(count));
     //从文件中读取字符
-    readFile(str);
+    len=readFile(str);
     //记录文件中的ASCII种类数
     n=countNum(str,count);
     //printf("%d\n",n);
@@ -365,20 +369,18 @@ int main(int argc,char *argv[])
     createHuffTree(h,n);
     //printHufTree(h,n);
     getCode(h,code,n);
-    
-    for(i=0;i<n;i++)
-    {
-        printf("%c: %s\t\t %d\n",code[i].ascii,code[i].ascii_code,code[i].weight);
+    writeCode(code,n,len,"1.txt",str);
     }
-    writeCode(code,n,"1.txt",str);
-    */
-    int n;
+    else
+    {
+    int n,len;
     char filename[128];
     memset(filename,'\0',sizeof(filename));
-    char str[MAX];
+    readCount(&n,&len,filename);
+    char str[len];
     memset(str,'\0',sizeof(str));
-    readCount(&n,filename);
     Code code[n];
     readCode(code,str);
     writeFile(str);
+    }
 }
