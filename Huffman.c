@@ -307,9 +307,10 @@ void readCount(int *n,int *len,char *filename1,char *filename2)
     fp=fopen(filename2,"r");
     if(fp==NULL)
     {
+        printf("Not Found %s",filename2);
         *n=0;
     }
-    fscanf(fp,"%d %d %s",n,len,filename);
+    fscanf(fp,"%d %d %s",n,len,filename1);
     fclose(fp);
 }
 //读取压缩后的文件内容，并将编码解析，写入文件
@@ -366,19 +367,31 @@ void compressFile(char *filename)
     createHuffTree(h,n);
     //printHufTree(h,n);
     getCode(h,code,n);
-    writeCode(code,n,len,filename,str);
+    char filename1[128];
+    bzero(filename1,sizeof(filename1));
+    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
+    {
+        filename1[i]=filename[i];
+    }
+    strcat(filename1,".code");
+    writeCode(code,n,len,filename,filename1,str);
 }
-void uncompressFile(char *filename1)
+void uncompressFile(char *filename2)
 {
-    int n,len;
-    char filename[128];
-    memset(filename,'\0',sizeof(filename));
-    readCount(&n,&len,filename,filename1);
+    int i,n,len;
+    char filename1[128],filename3[128];
+    memset(filename3,'\0',sizeof(filename1));
+    readCount(&n,&len,filename1,filename2);
     char str[len];
     memset(str,'\0',sizeof(str));
     Code code[n];
-    readCode(code,str,filename1);
-    writeFile(str,len,filename1);
+    readCode(code,str,filename2);
+    for(i=0;filename2[i]!='.' && filename2[i]!='\0';i++)
+    {
+        filename3[i]=filename2[i];
+    }
+    strcat(filename3,".decode");
+    writeFile(str,filename3,len);
 }
 void errorInput()
 {
