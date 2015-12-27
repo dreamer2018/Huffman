@@ -175,17 +175,17 @@ void HuffmanCode(HufNode *h,char *c,HufNode a,int n)
 }
 
 //读取出文件内容,返回值为文件的字符个数
-int readFile(char *str)
+int readFile(char *str,char *filename)
 {
     int i;
     FILE *fp;
     char ch;
-    fp=fopen("1.txt","r");
+    fp=fopen(filename,"r");
     if(fp==NULL)
     {
-        printf("Not Found 1.txt");
+        printf("Not Found %s",filename);
     }
-    for(i=0;i<20;i++)
+    for(i=0;;i++)
     {
         ch=getc(fp);
         if(ch==EOF)
@@ -199,12 +199,12 @@ int readFile(char *str)
     return i;
 }
 //将内容写入到文件中
-void writeFile(char *str)
+void writeFile(char *str,char *filename,int len)
 {
     int i;
     FILE *fp;
-    fp=fopen("1.txt.tmp","w");
-    for(i=0;str[i]!='\0';i++)
+    fp=fopen(filename,"w");
+    for(i=0;i<len;i++)
     {
         fputc(str[i],fp);
     }
@@ -284,12 +284,12 @@ char solveChar(Code *code,char *c,int n)
  *  第二部分（文件第二行到n+1行）:记录编码表的内容使用fscanf()函数写入，使用fprintf读取出
  *  第三部分（第n+2行到末尾）：记录编码后的内容
  */
-void writeCode(Code *code,int n,int len,char *filename,char *str)
+void writeCode(Code *code,int n,int len,char *filename1,char *filename2,char *str)
 {
     int i;
     FILE *fp;
-    fp=fopen("1.txt.code","w");
-    fprintf(fp,"%d %d %s",n,len,filename);
+    fp=fopen(filename2,"w");
+    fprintf(fp,"%d %d %s",n,len,filename1);
     for(i=0;i<n;i++)
     {
         fprintf(fp,"%c %s\n",code[i].ascii,code[i].ascii_code);
@@ -301,10 +301,10 @@ void writeCode(Code *code,int n,int len,char *filename,char *str)
     fclose(fp);
 }
 //读取出文件里的文件名和n值
-void readCount(int *n,int *len,char *filename)
+void readCount(int *n,int *len,char *filename1,char *filename2)
 {
     FILE *fp;
-    fp=fopen("1.txt.code","r");
+    fp=fopen(filename2,"r");
     if(fp==NULL)
     {
         *n=0;
@@ -313,14 +313,14 @@ void readCount(int *n,int *len,char *filename)
     fclose(fp);
 }
 //读取压缩后的文件内容，并将编码解析，写入文件
-int readCode(Code *code,char *str)
+int readCode(Code *code,char *str,char *filename1)
 {
     int i,n,len;
     char temp[8];
     bzero(temp,sizeof(temp));
     char filename[256];
     FILE *fp;
-    fp=fopen("1.txt.code","r");
+    fp=fopen(filename1,"r");
     if(fp==NULL)
     {
         return 0;
@@ -338,11 +338,8 @@ int readCode(Code *code,char *str)
     fclose(fp);
     return 1;
 }
-int main(int argc,char *argv[])
+void compressFile(char *filename)
 {
-    int sign=1;
-    if(sign==1)
-    {
     //n为需要编码的字符个数，m为哈夫曼树的节点个数,满足：m=2*n-1的关系
     int i,n,m,len;
     //数组下标加一就代表对应得ASCII字符，数组内存储的是那个ASCII字符出现的次数
@@ -352,7 +349,7 @@ int main(int argc,char *argv[])
     //将数组全部内容置为0
     bzero(count,sizeof(count));  //或者 memset(count,0,sizeof(count));
     //从文件中读取字符
-    len=readFile(str);
+    len=readFile(str,filename);
     //记录文件中的ASCII种类数
     n=countNum(str,count);
     //printf("%d\n",n);
@@ -369,18 +366,56 @@ int main(int argc,char *argv[])
     createHuffTree(h,n);
     //printHufTree(h,n);
     getCode(h,code,n);
-    writeCode(code,n,len,"1.txt",str);
-    }
-    else
-    {
+    writeCode(code,n,len,filename,str);
+}
+void uncompressFile(char *filename1)
+{
     int n,len;
     char filename[128];
     memset(filename,'\0',sizeof(filename));
-    readCount(&n,&len,filename);
+    readCount(&n,&len,filename,filename1);
     char str[len];
     memset(str,'\0',sizeof(str));
     Code code[n];
-    readCode(code,str);
-    writeFile(str);
+    readCode(code,str,filename1);
+    writeFile(str,len,filename1);
+}
+void errorInput()
+{
+    printf("Usage:zp -c/d/v/n filename\n");
+    printf(" -c 压缩   \n");
+    printf(" -d 解压缩 \n");
+    printf(" -v 版本号 \n");
+    printf(" -h 帮助   \n");
+}
+int main(int argc,char *argv[])
+{
+
+    if(argc>=3)
+    {
+        if(!strncmp(argv[1],"-d",2))
+        {
+            uncompressFile(argv[2]);   
+        }
+        else if(!strncmp(argv[1],"-c",2))
+        {   
+            compressFile(argv[2]);
+        }
+        else if(!strncmp(argv[1],"-v",2))
+        {
+            printf("zp version 0.3.1 20151227\n");
+        }
+        else if(!strncmp(argv[1],"-h",2))
+        {
+            errorInput();
+        }
+        else
+        {
+            errorInput();
+        }
+    }
+    else
+    {
+        errorInput();
     }
 }
