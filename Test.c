@@ -267,31 +267,74 @@ int Code_Index(Code *code,char ch,int n)
 }
 void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
 {
-    int i,j,bytenum=0;
-    FILE *fp;
-    FILE *fp2;
-    char temp;
-    int c[8];
-    char filename1[128];
+    int i,j,bytenum=-1,c[8],k,h;
+    FILE *fp,*fp2;
+
+    char temp,filename1[128],ch;
+
+    //根据原文件名，创建出中间文件名
     memset(filename1,'\0',sizeof(filename1));
-    char ch;
     for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
     {
         filename1[i]=filename[i];
     }
     strcat(filename1,".code");
-    fp=fopen(filename1,"w");
-    fp2=fopen(filename,"r");
+
+    fp=fopen(filename1,"w");    //编码文件
+    fp2=fopen(filename,"r");    //源文件
     if(fp2==NULL)
     {
         printf("Not Found %s",filename);
     }
+
+    //先写入文件头部信息
     fprintf(fp,"%d %d",n,len);
+    
+    //再写入code相关信息
     for(i=0;i<n;i++)
     {
         //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
         fwrite(&code[i],sizeof(Code),1,fp);
     }
+    for(i=0;i<n;i++)
+    {
+        printf("ASCII:%s\n",ascii_code[i]);
+    }
+    //将源文件压缩后写入
+    for(i=0;i<len;i++)
+    {
+        //从源文件里面读出部分内容
+        fread(&ch,1,1,fp2);
+        
+        //与源编码表进行匹配
+        int index=Code_Index(code,ch,n);
+        //printf("Index = %d",index);
+
+        //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
+        for(j=0;ascii_code[index][j]!='\0';j++)
+        {
+            bytenum++;
+            c[bytenum]=(int )ascii_code[index][j]-48;
+            if(bytenum == 7)
+            {
+                printf("++++++++++++++++++++++++++\n");
+                for(i=0;i<8;i++)
+                {
+                    printf("%d",c[i]);
+                }
+                printf("\n");
+                k=Binary_Int(c);
+                h=(char)k;
+                fwrite(&h,1,1,fp);
+                bytenum=-1;
+            }
+        }
+    }
+    if(bytenum>-1 && bytenum < 7)
+    {
+        
+    }
+    
     /*
     for(i=0;i<len;i++)
     {
@@ -320,24 +363,6 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         fwrite(&c,1,1,fp);
     }
     */
-    int k,h;
-    for(i=0;i<len;i++)
-    {
-        fread(&ch,1,1,fp2);
-        int index=Code_Index(code,ch,n);
-        for(j=0;ascii_code[index][j]!='\0';j++)
-        {
-            c[bytenum]=ascii_code[index][j];
-            if(bytenum == 7)
-            {
-                k=Binary_Int(c);
-                h=(char)k;
-                fwrite(&h,1,1,fp);
-                bytenum=0;
-                //memset(c,0,sizeof(c));
-            }
-        }
-    }
     fclose(fp);
     fclose(fp2);
 }
@@ -357,54 +382,65 @@ int readNum(char *filename)
 }
 void readCode(Code *code,char *filename)
 {
-    int i,j,n,len,k;
+    int i,j,n,len,k,sign=0;
+    //记录二进制编码，用于转换成二进制
     int binary[8];
     FILE *fp;
+    FILE *fp2;
     char filename1[128];
     char ch;
+    
+    //根据原文件名，导出新文件名
     memset(filename1,'\0',sizeof(filename1));
-    fp=fopen(filename,"r");
+    
+    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
+    {
+        filename1[i]=filename[i];   
+    }
+    strcat(filename1,".decode");
+    
+    fp=fopen(filename,"r"); //源文件
+    fp2=fopen(filename1,"w"); //要写的编码文件
     if(fp==NULL)
     {
         printf("Not Found %s\n",filename);
     }
+    
+    //先读出文件头部信息
     fscanf(fp,"%d %d",&n,&len);
+    
+    //后读取code里面的内容，包括源ASCII编码和权值内容
     for(i=0;i<n;i++)
     {
         //fscanf(fp,"%c %d %s\n",&code[i].ascii,&code[i].weight,code[i].code);
         fread(&code[i],sizeof(Code),1,fp);
     }
-    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
-    {
-        filename1[i]=filename[i];   
-    }
-
+    
     //建立哈夫曼树
     HufNode h[2*n-1];
     initHuffTree(code,h,n);
     createHuffTree(h,n);
     
-    strcat(filename1,".decode");
-    FILE *fp2;
-    fp2=fopen(filename1,"w");
-    
-    int sign=0;
+    //临时的节点
     HufNode t;
+    //从源文件里面读出内容
     fread(&ch,1,1,fp);
     k=(int)ch;
     Int_Binary(binary,k);
     t=h[2*n-1];
+    sign++;
+    
     for(j=0;;j++)
     {
-        if(sign>len)
-        {
-            break;
-        }
         if(t.LChild ==0 || t.RChild ==0)
         {
             fwrite(&code[i].ascii,1,1,fp2);
             t=h[2*n-1];
             sign++;
+        } 
+        if(sign>=len-1)
+        {
+            break;
         }
         if(binary[j]==0)
         {
@@ -430,7 +466,9 @@ void compressFile(char *filename)
     int i,n,m,len;
     int Weight[256];
     bzero(Weight,sizeof(Weight));
+    
     len=readFile(Weight,filename);
+    
     for(i=0;i<256;i++)
     {
         if(Weight[i]!=0)
@@ -452,6 +490,7 @@ void compressFile(char *filename)
     {
         printf("%d %d\n",code[i].ascii,code[i].weight);
     }
+    
     HufNode h[m];
     initHuffTree(code,h,n);
     createHuffTree(h,n);
@@ -484,7 +523,6 @@ void errorInput()
 }
 int main(int argc,char *argv[])
 {
-
     if(argc==3)
     {
         if(!strncmp(argv[1],"-d",2))
