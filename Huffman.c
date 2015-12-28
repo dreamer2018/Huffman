@@ -414,6 +414,7 @@ int main(int argc,char *argv[])
         {   
             compressFile(argv[2]);
         }
+        else
         {
             errorInput();
         }
