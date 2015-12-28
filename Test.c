@@ -125,6 +125,35 @@ void createHuffTree(HufNode *h,int n)
     }
 }
 
+void Int_Binary(int ascii_code[],int k)
+{
+    int i,j,h;
+    int temp;
+    for(i=0;i<8;i++)
+    {
+        ascii_code[i]=0;
+    }
+    for(i=7;i>=0;i--)
+    {
+        ascii_code[i]=(char)(k%2);
+        k=k/2;
+        if(k==0)
+        {
+            break;
+        }
+    }
+}
+int Binary_Int(int ascii_code[])
+{
+    int i=7,j=0;
+    for(i=0;i<8;i++)
+    {
+        j+=ascii_code[i]*pow(2,7-i);
+    }
+    return j;
+}
+
+
 //打印出哈夫曼树
 void printHufTree(HufNode *h,int n)
 {
@@ -241,7 +270,8 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
     int i,j,bytenum=0;
     FILE *fp;
     FILE *fp2;
-    char temp,c;
+    char temp;
+    int c[8];
     char filename1[128];
     memset(filename1,'\0',sizeof(filename1));
     char ch;
@@ -262,6 +292,7 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
         fwrite(&code[i],sizeof(Code),1,fp);
     }
+    /*
     for(i=0;i<len;i++)
     {
         fread(&ch,1,1,fp2);
@@ -288,6 +319,25 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         ch<<=(8- bytenum);
         fwrite(&c,1,1,fp);
     }
+    */
+    int k,h;
+    for(i=0;i<len;i++)
+    {
+        fread(&ch,1,1,fp2);
+        int index=Code_Index(code,ch,n);
+        for(j=0;ascii_code[index][j]!='\0';j++)
+        {
+            c[bytenum]=ascii_code[index][j];
+            if(bytenum == 7)
+            {
+                k=Binary_Int(c);
+                h=(char)k;
+                fwrite(&h,1,1,fp);
+                bytenum=0;
+                //memset(c,0,sizeof(c));
+            }
+        }
+    }
     fclose(fp);
     fclose(fp2);
 }
@@ -305,36 +355,10 @@ int readNum(char *filename)
     fclose(fp);
     return n;
 }
-void Int_Binary(int ascii_code[],int k)
-{
-    int i,j,h;
-    int temp;
-    for(i=0;i<8;i++)
-    {
-        ascii_code[i]=0;
-    }
-    for(i=7;i>=0;i--)
-    {
-        ascii_code[i]=(char)(k%2);
-        k=k/2;
-        if(k==0)
-        {
-            break;
-        }
-    }
-}
-int Binary_Int(int ascii_code[])
-{
-    int i=7,j=0;
-    for(i=0;i<8;i++)
-    {
-        j+=ascii_code[i]*pow(2,7-i);
-    }
-    return j;
-}
 void readCode(Code *code,char *filename)
 {
     int i,j,n,len,k;
+    int binary[8];
     FILE *fp;
     char filename1[128];
     char ch;
@@ -354,14 +378,49 @@ void readCode(Code *code,char *filename)
     {
         filename1[i]=filename[i];   
     }
+
+    //建立哈夫曼树
+    HufNode h[2*n-1];
+    initHuffTree(code,h,n);
+    createHuffTree(h,n);
+    
     strcat(filename1,".decode");
     FILE *fp2;
     fp2=fopen(filename1,"w");
-    for(i=0;i<len;i++)
+    
+    int sign=0;
+    HufNode t;
+    fread(&ch,1,1,fp);
+    k=(int)ch;
+    Int_Binary(binary,k);
+    t=h[2*n-1];
+    for(j=0;;j++)
     {
-        fread(&ch,1,1,fp);
-        k=(int)ch;
-
+        if(sign>len)
+        {
+            break;
+        }
+        if(t.LChild ==0 || t.RChild ==0)
+        {
+            fwrite(&code[i].ascii,1,1,fp2);
+            t=h[2*n-1];
+            sign++;
+        }
+        if(binary[j]==0)
+        {
+            t=h[t.LChild];
+        }
+        else 
+        {
+            t=h[t.RChild];
+        }
+        if(j==7)
+        {
+            fread(&ch,1,1,fp);
+            k=(int)ch;
+            Int_Binary(binary,k);
+            j=0;
+        }
     }
     fclose(fp);
     fclose(fp2);
