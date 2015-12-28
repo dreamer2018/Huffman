@@ -8,7 +8,8 @@
  ************************************************************************************************/
 
 #include<stdio.h>
-void Int_Binary(int ascii_code[8],int k)
+#include<math.h>
+void Int_Binary(int ascii_code[],int k)
 {
     int i,j,h;
     int temp;
@@ -16,7 +17,7 @@ void Int_Binary(int ascii_code[8],int k)
     {
         ascii_code[i]=0;
     }
-    for(i=8;i>=0;i--)
+    for(i=7;i>=0;i--)
     {
         ascii_code[i]=(char)(k%2);
         k=k/2;
@@ -26,14 +27,25 @@ void Int_Binary(int ascii_code[8],int k)
         }
     }
 }
-
+int Binary_Int(int ascii_code[])
+{
+    printf("\n");
+    int i=7,j=0;
+    for(i=0;i<8;i++)
+    {
+        j+=ascii_code[i]*pow(2,7-i);
+    }
+    return j;
+}
 int main()
 {
-    int i;
+    int i,k=0;
     int ascii_code[8];
-    Int_Binary(ascii_code,64);
-    for(i=0;i<=8;i++)
+    Int_Binary(ascii_code,54);
+    for(i=0;i<8;i++)
     {
         printf("%d",ascii_code[i]);
     }
+    k=Binary_Int(ascii_code);
+    printf("%d",k);
 }
