@@ -35,6 +35,7 @@ typedef struct
 {
     char ascii;
     int weight;
+    char code[9];
 }Code;
 
 //初始化哈夫曼数的结点
@@ -195,32 +196,142 @@ int countWeight(Code *code,int *Weight)
         }
     }
 }
-void readFile(int *Weigh)
+int readFile(int *Weigh,char *filename)
 {
-    int i;
+    int i,j,k;
     FILE *fp;
     char ch;
-    fp=fopen("1.txt","r");
-    while(!feof(fp))
+    fp=fopen(filename,"r");
+    if(fp==NULL)
+    {
+        printf("Not Found %s\n",filename);
+    }
+    for(j=0;!feof(fp);j++)
     {
         fread(&ch,1,1,fp);
+        k=(int)ch;
+        if(k<0)
+        {
+            k=k+256;
+        }
         for(i=0;i<256;i++)
         {
-            if(ch==i)
+            if(k==i)
             {
                 Weigh[i]++;
                 break;
             }
         }
     }
+    return j;
 }
-
-int main()
+void writeCode(Code *code,int n,int len,char *filename)
 {
-    int i,n,m;
+    int i,j;
+    FILE *fp;
+    FILE *fp2;
+    char filename1[128];
+    memset(filename1,'\0',sizeof(filename1));
+    char ch;
+    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
+    {
+        filename1[i]=filename[i];
+    }
+    strcat(filename1,".code");
+    fp=fopen(filename1,"w");
+    fprintf(fp,"%d %d\n",n,len);
+    for(i=0;i<n;i++)
+    {
+        //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
+        fwrite(&code[i],sizeof(code[i]),1,fp);
+    }
+    printf("--------\n");
+    for(i=0;i<n;i++)
+    {
+        printf("%c %s\n",code[i].ascii,code[i].code);
+    }
+    fp2=fopen(filename,"r");
+ //   while(!feof(fp2))
+    for(j=0;j<len-1;j++)
+    {
+        fread(&ch,1,1,fp2);
+        for(i=0;i<n;i++)
+        {
+            if(ch==code[i].ascii)
+            {
+                fprintf(fp,"%s\n",code[i].code);
+            }
+        }
+    }
+    fclose(fp);
+    fclose(fp2);
+}
+int readNum(char *filename)
+{
+    FILE *fp;
+    int n,len;
+    fp=fopen(filename,"r");
+    if(fp==NULL)
+    {
+        printf("Not Found %s",filename);
+        return 0;
+    }
+    fscanf(fp,"%d %d\n",&n,&len);
+    fclose(fp);
+    return n;
+}
+void readCode(Code *code,char *filename)
+{
+    int i,j,n,len;
+    FILE *fp;
+    char filename1[128];
+    char ch[9];
+    memset(filename1,'\0',sizeof(filename1));
+    fp=fopen(filename,"r");
+    if(fp==NULL)
+    {
+        printf("Not Found %s\n",filename);
+    }
+    fscanf(fp,"%d %d\n",&n,&len);
+    for(i=0;i<n;i++)
+    {
+        //fscanf(fp,"%c %d %s\n",&code[i].ascii,&code[i].weight,code[i].code);
+        fread(&code[i],sizeof(code[i]),1,fp);
+    }
+    printf("--------\n");
+    for(i=0;i<n;i++)
+    {
+        printf("%c %s\n",code[i].ascii,code[i].code);
+    }
+    for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
+    {
+        filename1[i]=filename[i];   
+    }
+    strcat(filename1,".decode");
+    FILE *fp2;
+    fp2=fopen(filename1,"w");
+    //while(!feof(fp))
+    for(j=0;j<len;j++)
+    {
+        memset(ch,'\0',sizeof(ch));
+        fscanf(fp,"%s\n",ch);
+        for(i=0;i<n;i++)
+        {
+            if(!strcmp(code[i].code,ch))
+            {
+                fwrite(&code[i].ascii,1,1,fp2);
+            }
+        }
+    }
+    fclose(fp);
+    fclose(fp2);
+}
+void compressFile(char *filename)
+{
+    int i,n,m,len;
     int Weight[256];
     bzero(Weight,sizeof(Weight));
-    readFile(Weight);
+    len=readFile(Weight,filename);
     for(i=0;i<256;i++)
     {
         if(Weight[i]!=0)
@@ -230,7 +341,7 @@ int main()
     }
     n=countZero(Weight);
     m=2*n-1;
-    printf("%d\n",n);
+    printf("n=%d len=%d\n",n,len);
     Code code[n];
     countWeight(code,Weight);
     for(i=0;i<n;i++)
@@ -241,5 +352,67 @@ int main()
     initHuffTree(code,h,n);
     createHuffTree(h,n);
     printHufTree(h,n);
+    for(i=0;i<n;i++)
+    {
+        bzero(code[i].code,sizeof(code[i].code));
+        HuffmanCode(h,code[i].code,h[i],i);
+    }
+    for(i=0;i<n;i++)
+    {
+        printf("%c:%s\n",code[i].ascii,code[i].code);
+    }
+    writeCode(code,n,len,filename);
+}
+void uncompressFile(char *filename)
+{
+    int n;
+    n=readNum(filename);
+    Code code[n];
+    readCode(code,filename);
+}
+void errorInput()
+{
+    printf("Usage:zp -c/d/v/n filename\n");
+    printf(" -c 压缩   \n");
+    printf(" -d 解压缩 \n");
+    printf(" -v 版本号 \n");
+    printf(" -h 帮助   \n");
+}
+int main(int argc,char *argv[])
+{
 
+    if(argc==3)
+    {
+        if(!strncmp(argv[1],"-d",2))
+        {
+            uncompressFile(argv[2]);   
+        }
+        else if(!strncmp(argv[1],"-c",2))
+        {   
+            compressFile(argv[2]);
+        }
+        else
+        {
+            errorInput();
+        }
+    }
+    else if(argc==2)
+    {
+        if(!strncmp(argv[1],"-v",2))
+        {
+            printf("zp version 0.3.1 20151227\n");
+        }
+        else if(!strncmp(argv[1],"-h",2))
+        {
+            errorInput();
+        }
+        else
+        {
+            errorInput();
+        }
+    }
+    else
+    {
+        errorInput();
+    }
 }
