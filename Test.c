@@ -9,6 +9,7 @@
 
 #include<stdio.h>
 #include<string.h>
+#include<math.h>
 
 //定义数据类型
 #define DataType int
@@ -304,18 +305,32 @@ int readNum(char *filename)
     fclose(fp);
     return n;
 }
-void Int_Binary(char ascii_code[8],int k)
+void Int_Binary(int ascii_code[],int k)
 {
-    int i;
+    int i,j,h;
+    int temp;
     for(i=0;i<8;i++)
     {
-        ascii_code[i]='0';
+        ascii_code[i]=0;
     }
+    for(i=7;i>=0;i--)
+    {
+        ascii_code[i]=(char)(k%2);
+        k=k/2;
+        if(k==0)
+        {
+            break;
+        }
+    }
+}
+int Binary_Int(int ascii_code[])
+{
+    int i=7,j=0;
     for(i=0;i<8;i++)
     {
-        ascii_code[i]=(char)k/2
-
+        j+=ascii_code[i]*pow(2,7-i);
     }
+    return j;
 }
 void readCode(Code *code,char *filename)
 {
