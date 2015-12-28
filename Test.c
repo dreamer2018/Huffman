@@ -35,7 +35,6 @@ typedef struct
 {
     char ascii;
     int weight;
-    char code[9];
 }Code;
 
 //初始化哈夫曼数的结点
@@ -225,11 +224,23 @@ int readFile(int *Weigh,char *filename)
     }
     return j;
 }
-void writeCode(Code *code,int n,int len,char *filename)
+int Code_Index(Code *code,char ch,int n)
 {
-    int i,j;
+    int i;
+    for(i=0;i<n;i++)
+        {
+            if(ch==code[i].ascii)
+            {
+                return i;
+            }
+        }
+}
+void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
+{
+    int i,j,bytenum=0;
     FILE *fp;
     FILE *fp2;
+    char temp,c;
     char filename1[128];
     memset(filename1,'\0',sizeof(filename1));
     char ch;
@@ -239,29 +250,42 @@ void writeCode(Code *code,int n,int len,char *filename)
     }
     strcat(filename1,".code");
     fp=fopen(filename1,"w");
-    fprintf(fp,"%d %d\n",n,len);
+    fp2=fopen(filename,"r");
+    if(fp2==NULL)
+    {
+        printf("Not Found %s",filename);
+    }
+    fprintf(fp,"%d %d",n,len);
     for(i=0;i<n;i++)
     {
         //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
-        fwrite(&code[i],sizeof(code[i]),1,fp);
+        fwrite(&code[i],sizeof(Code),1,fp);
     }
-    printf("--------\n");
-    for(i=0;i<n;i++)
-    {
-        printf("%c %s\n",code[i].ascii,code[i].code);
-    }
-    fp2=fopen(filename,"r");
- //   while(!feof(fp2))
-    for(j=0;j<len-1;j++)
+    for(i=0;i<len;i++)
     {
         fread(&ch,1,1,fp2);
-        for(i=0;i<n;i++)
+        int index=Code_Index(code,ch,n);
+        for(j=0;ascii_code[index][j]!='\0';j++)
         {
-            if(ch==code[i].ascii)
+            c<<=1;  //将读到的字符左移一位
+            bytenum++;
+            if(ascii_code[index][j]=='1')
             {
-                fprintf(fp,"%s\n",code[i].code);
+                c=c | 1;
+            }
+            if(bytenum == 8) //当字节位移满八次以后进行一次压缩
+            {
+                fwrite(&c,1,1,fp);
+                bytenum=0;
+                c=0;
             }
         }
+    }
+    //如果压缩的字节不足8位，则用0补足
+    if(bytenum > 0 && bytenum < 8)
+    {
+        ch<<=(8- bytenum);
+        fwrite(&c,1,1,fp);
     }
     fclose(fp);
     fclose(fp2);
@@ -276,32 +300,40 @@ int readNum(char *filename)
         printf("Not Found %s",filename);
         return 0;
     }
-    fscanf(fp,"%d %d\n",&n,&len);
+    fscanf(fp,"%d %d",&n,&len);
     fclose(fp);
     return n;
 }
+void Int_Binary(char ascii_code[8],int k)
+{
+    int i;
+    for(i=0;i<8;i++)
+    {
+        ascii_code[i]='0';
+    }
+    for(i=0;i<8;i++)
+    {
+        ascii_code[i]=(char)k/2
+
+    }
+}
 void readCode(Code *code,char *filename)
 {
-    int i,j,n,len;
+    int i,j,n,len,k;
     FILE *fp;
     char filename1[128];
-    char ch[9];
+    char ch;
     memset(filename1,'\0',sizeof(filename1));
     fp=fopen(filename,"r");
     if(fp==NULL)
     {
         printf("Not Found %s\n",filename);
     }
-    fscanf(fp,"%d %d\n",&n,&len);
+    fscanf(fp,"%d %d",&n,&len);
     for(i=0;i<n;i++)
     {
         //fscanf(fp,"%c %d %s\n",&code[i].ascii,&code[i].weight,code[i].code);
-        fread(&code[i],sizeof(code[i]),1,fp);
-    }
-    printf("--------\n");
-    for(i=0;i<n;i++)
-    {
-        printf("%c %s\n",code[i].ascii,code[i].code);
+        fread(&code[i],sizeof(Code),1,fp);
     }
     for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
     {
@@ -310,18 +342,11 @@ void readCode(Code *code,char *filename)
     strcat(filename1,".decode");
     FILE *fp2;
     fp2=fopen(filename1,"w");
-    //while(!feof(fp))
-    for(j=0;j<len;j++)
+    for(i=0;i<len;i++)
     {
-        memset(ch,'\0',sizeof(ch));
-        fscanf(fp,"%s\n",ch);
-        for(i=0;i<n;i++)
-        {
-            if(!strcmp(code[i].code,ch))
-            {
-                fwrite(&code[i].ascii,1,1,fp2);
-            }
-        }
+        fread(&ch,1,1,fp);
+        k=(int)ch;
+
     }
     fclose(fp);
     fclose(fp2);
@@ -343,6 +368,11 @@ void compressFile(char *filename)
     m=2*n-1;
     printf("n=%d len=%d\n",n,len);
     Code code[n];
+    char ascii_code[n][9];
+    for(i=0;i<n;i++)
+    {
+        memset(ascii_code,'\0',sizeof(ascii_code));
+    }
     countWeight(code,Weight);
     for(i=0;i<n;i++)
     {
@@ -354,14 +384,14 @@ void compressFile(char *filename)
     printHufTree(h,n);
     for(i=0;i<n;i++)
     {
-        bzero(code[i].code,sizeof(code[i].code));
-        HuffmanCode(h,code[i].code,h[i],i);
+        bzero(ascii_code[i],sizeof(ascii_code[i]));
+        HuffmanCode(h,ascii_code[i],h[i],i);
     }
     for(i=0;i<n;i++)
     {
-        printf("%c:%s\n",code[i].ascii,code[i].code);
+        printf("%c:%s\n",code[i].ascii,ascii_code[i]);
     }
-    writeCode(code,n,len,filename);
+    writeCode(code,ascii_code,n,len,filename);
 }
 void uncompressFile(char *filename)
 {
