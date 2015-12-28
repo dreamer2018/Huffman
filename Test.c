@@ -311,16 +311,17 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         //printf("Index = %d",index);
 
         //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
+        int m;
         for(j=0;ascii_code[index][j]!='\0';j++)
         {
             bytenum++;
             c[bytenum]=(int )ascii_code[index][j]-48;
             if(bytenum == 7)
             {
-                printf("++++++++++++++++++++++++++\n");
-                for(i=0;i<8;i++)
+                printf("++++++++++++++++++++++++++ i=%d\n",i);
+                for(m=0;m<8;m++)
                 {
-                    printf("%d",c[i]);
+                    printf("%d",c[m]);
                 }
                 printf("\n");
                 k=Binary_Int(c);
@@ -332,9 +333,14 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
     }
     if(bytenum>-1 && bytenum < 7)
     {
-        
+        for(i=bytenum+1;i<8;i++)
+        {
+            c[i]=0;    
+        }
+        k=Binary_Int(c);
+        h=(char)k;
+        fwrite(&h,1,1,fp);
     }
-    
     /*
     for(i=0;i<len;i++)
     {
