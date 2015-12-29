@@ -4,7 +4,7 @@
 	> Mail: zhoupans_mail@163.com
 	> Blog: blog.csdn.net/it_dream_er
 	> Function:
-	> Created Time: 2015年12月27日 星期日 21时23分16秒
+	> Created Time: 2015年12月29日 星期二 21时23分49秒
  ************************************************************************************************/
 
 #include<stdio.h>
@@ -264,7 +264,7 @@ int Code_Index(Code *code,char ch,int n)
             }
         }
 }
-void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
+void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
 {
     int i,j,bytenum=-1,c[8],k,h;
     FILE *fp,*fp2;
@@ -306,7 +306,7 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
         
         int m;
-
+        
         for(j=0;ascii_code[index][j]!='\0';j++)
         {
             bytenum++;
@@ -458,7 +458,7 @@ int readCode(Code *code,char *filename)
     {
         if(t.LChild ==0 && t.RChild ==0)
         {
-            printf("test2 j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
+            printf("test2                      j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
             //判断文件到末尾没
             if(feof(fp))
             {
@@ -501,7 +501,7 @@ int readCode(Code *code,char *filename)
             {
                 printf("%d",binary[i]);
             }
-            j=0;
+            j=-1;
         }
     }
     fclose(fp);
@@ -526,7 +526,7 @@ void compressFile(char *filename)
     m=2*n-1;
     printf("n=%d len=%d\n",n,len);
     Code code[n];
-    char ascii_code[n][9];
+    char ascii_code[n][100];
     for(i=0;i<n;i++)
     {
         memset(ascii_code,'\0',sizeof(ascii_code));
