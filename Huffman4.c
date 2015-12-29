@@ -588,7 +588,7 @@ int main(int argc,char *argv[])
     {
         if(!strncmp(argv[1],"-v",2))
         {
-            printf("zp version 0.3.1 20151227\n");
+            printf("zp version 0.5.0 20151229\n");
         }
         else if(!strncmp(argv[1],"-h",2))
         {
