@@ -35,7 +35,7 @@ typedef struct
 {
     char ascii;
     int weight;
-    char code[9];
+    char code[257];
 }Code;
 
 //初始化哈夫曼数的结点
