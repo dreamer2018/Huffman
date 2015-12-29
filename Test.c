@@ -296,32 +296,26 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
         fwrite(&code[i],sizeof(Code),1,fp);
     }
-    for(i=0;i<n;i++)
-    {
-        printf("ASCII:%s\n",ascii_code[i]);
-    }
     //将源文件压缩后写入
     for(i=0;i<len;i++)
     {
         //从源文件里面读出部分内容
         fread(&ch,1,1,fp2);
-        
         //与源编码表进行匹配
         int index=Code_Index(code,ch,n);
         //printf("Index = %d",index);
-
         //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
         int m;
         for(j=0;ascii_code[index][j]!='\0';j++)
         {
             bytenum++;
-            c[bytenum]=(int )ascii_code[index][j]-48;
+            c[bytenum]=(int)ascii_code[index][j]-48;
             if(bytenum == 7)
             {
-                printf("++++++++++++++++++++++++++ i=%d\n",i);
-                for(m=0;m<8;m++)
+                int l;
+                for(l=0;l<8;l++)
                 {
-                    printf("%d",c[m]);
+                    printf("%d",c[l]);
                 }
                 printf("\n");
                 k=Binary_Int(c);
@@ -331,12 +325,19 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
             }
         }
     }
+    printf("%d\n",bytenum);
     if(bytenum>-1 && bytenum < 7)
     {
         for(i=bytenum+1;i<8;i++)
         {
             c[i]=0;    
         }
+        int l;
+        for(l=0;l<8;l++)
+        {
+            printf("%d",c[l]);
+        }
+        printf("\n");
         k=Binary_Int(c);
         h=(char)k;
         fwrite(&h,1,1,fp);
@@ -386,9 +387,9 @@ int readNum(char *filename)
     fclose(fp);
     return n;
 }
-void readCode(Code *code,char *filename)
+int readCode(Code *code,char *filename)
 {
-    int i,j,n,len,k,sign=0;
+    int i,j,n,len,k,sign=0,index;
     //记录二进制编码，用于转换成二进制
     int binary[8];
     FILE *fp;
@@ -426,41 +427,79 @@ void readCode(Code *code,char *filename)
     HufNode h[2*n-1];
     initHuffTree(code,h,n);
     createHuffTree(h,n);
-    
+    printHufTree(h,n);
     //临时的节点
     HufNode t;
+    //判断文件到末尾没
+    if(feof(fp))
+    {
+        printf("return\n");
+        return 0;   
+    }
     //从源文件里面读出内容
     fread(&ch,1,1,fp);
     k=(int)ch;
+    if(k<0)
+    {
+        k=k+256;
+    }
+    printf("%d\n",k);
     Int_Binary(binary,k);
-    t=h[2*n-1];
+    for(i=0;i<8;i++)
+    {
+        printf("%d",binary[i]);
+    }
+    printf("\n");
+    t=h[2*n-2];
     sign++;
-    
+    index=2*n-2;
     for(j=0;;j++)
     {
-        if(t.LChild ==0 || t.RChild ==0)
+        if(t.LChild ==0 && t.RChild ==0)
         {
-            fwrite(&code[i].ascii,1,1,fp2);
-            t=h[2*n-1];
+            printf("test2 j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
+            //判断文件到末尾没
+            if(feof(fp))
+            {
+                break;   
+            }
+            fwrite(&code[index].ascii,1,1,fp2);
+            t=h[2*n-2];
             sign++;
-        } 
-        if(sign>=len-1)
+            j--;
+        }
+        else
+        {
+            printf("test j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
+            if(binary[j]==0)
+            {
+                index=t.LChild;
+                t=h[t.LChild];
+            }
+            else 
+            {
+                index=t.RChild;
+                t=h[t.RChild];
+            }
+        }
+        if(sign>=len)
         {
             break;
-        }
-        if(binary[j]==0)
-        {
-            t=h[t.LChild];
-        }
-        else 
-        {
-            t=h[t.RChild];
         }
         if(j==7)
         {
             fread(&ch,1,1,fp);
             k=(int)ch;
+            if(k<0)
+            {
+                k=k+256;
+            }
+            printf("%d\n",k);
             Int_Binary(binary,k);
+            for(i=0;i<8;i++)
+            {
+                printf("%d",binary[i]);
+            }
             j=0;
         }
     }
