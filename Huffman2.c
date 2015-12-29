@@ -35,7 +35,7 @@ typedef struct
 {
     char ascii;
     int weight;
-    char ascii_code[8];  //八位二进制的最多组合形式就为256种，所以最长也就为8位
+    char ascii_code[257];
 }Code;
 
 //初始化哈夫曼数的结点
@@ -384,7 +384,6 @@ void errorInput()
 }
 int main(int argc,char *argv[])
 {
-
     if(argc==3)
     {
         if(!strncmp(argv[1],"-d",2))
@@ -395,6 +394,7 @@ int main(int argc,char *argv[])
         {   
             compressFile(argv[2]);
         }
+        else
         {
             errorInput();
         }
