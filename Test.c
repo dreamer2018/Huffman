@@ -13,7 +13,6 @@
 
 //定义数据类型
 #define DataType int
-#define MAX 10000  //文件里的最多的字符个数
 
 //定义二叉树结构体
 typedef struct BinaryTree
@@ -305,7 +304,9 @@ void writeCode(Code *code,char ascii_code[][9],int n,int len,char *filename)
         int index=Code_Index(code,ch,n);
         //printf("Index = %d",index);
         //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
+        
         int m;
+
         for(j=0;ascii_code[index][j]!='\0';j++)
         {
             bytenum++;
