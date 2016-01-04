@@ -257,14 +257,14 @@ int Code_Index(Code *code,char ch,int n)
 {
     int i;
     for(i=0;i<n;i++)
+    {
+        if(ch==code[i].ascii)
         {
-            if(ch==code[i].ascii)
-            {
-                return i;
-            }
+            return i;
         }
+    }
 }
-void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
+void writeCode(Code *code,char ascii_code[][256],int n,int len,char *filename)
 {
     int i,j,bytenum=-1,c[8],k,h;
     FILE *fp,*fp2;
@@ -273,6 +273,7 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
 
     //根据原文件名，创建出中间文件名
     memset(filename1,'\0',sizeof(filename1));
+    
     for(i=0;filename[i]!='.' && filename[i]!='\0';i++)
     {
         filename1[i]=filename[i];
@@ -281,6 +282,7 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
 
     fp=fopen(filename1,"w");    //编码文件
     fp2=fopen(filename,"r");    //源文件
+    
     if(fp2==NULL)
     {
         printf("Not Found %s",filename);
@@ -292,9 +294,9 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
     //再写入code相关信息
     for(i=0;i<n;i++)
     {
-        //fprintf(fp,"%c %d %s\n",code[i].ascii,code[i].weight,code[i].code);
         fwrite(&code[i],sizeof(Code),1,fp);
     }
+
     //将源文件压缩后写入
     for(i=0;i<len;i++)
     {
@@ -302,7 +304,6 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
         fread(&ch,1,1,fp2);
         //与源编码表进行匹配
         int index=Code_Index(code,ch,n);
-        //printf("Index = %d",index);
         //将文件的编码后的码值得到之后，8个为一段，然后转成十进制，然后将十进制整形强转成字符类型，然后存入文件
         
         int m;
@@ -313,12 +314,6 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
             c[bytenum]=(int)ascii_code[index][j]-48;
             if(bytenum == 7)
             {
-                int l;
-                for(l=0;l<8;l++)
-                {
-                    printf("%d",c[l]);
-                }
-                printf("\n");
                 k=Binary_Int(c);
                 h=(char)k;
                 fwrite(&h,1,1,fp);
@@ -326,51 +321,16 @@ void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
             }
         }
     }
-    printf("%d\n",bytenum);
     if(bytenum>-1 && bytenum < 7)
     {
         for(i=bytenum+1;i<8;i++)
         {
             c[i]=0;    
         }
-        int l;
-        for(l=0;l<8;l++)
-        {
-            printf("%d",c[l]);
-        }
-        printf("\n");
         k=Binary_Int(c);
         h=(char)k;
         fwrite(&h,1,1,fp);
     }
-    /*
-    for(i=0;i<len;i++)
-    {
-        fread(&ch,1,1,fp2);
-        int index=Code_Index(code,ch,n);
-        for(j=0;ascii_code[index][j]!='\0';j++)
-        {
-            c<<=1;  //将读到的字符左移一位
-            bytenum++;
-            if(ascii_code[index][j]=='1')
-            {
-                c=c | 1;
-            }
-            if(bytenum == 8) //当字节位移满八次以后进行一次压缩
-            {
-                fwrite(&c,1,1,fp);
-                bytenum=0;
-                c=0;
-            }
-        }
-    }
-    //如果压缩的字节不足8位，则用0补足
-    if(bytenum > 0 && bytenum < 8)
-    {
-        ch<<=(8- bytenum);
-        fwrite(&c,1,1,fp);
-    }
-    */
     fclose(fp);
     fclose(fp2);
 }
@@ -412,6 +372,7 @@ int readCode(Code *code,char *filename)
     if(fp==NULL)
     {
         printf("Not Found %s\n",filename);
+        return 0;
     }
     
     //先读出文件头部信息
@@ -420,7 +381,6 @@ int readCode(Code *code,char *filename)
     //后读取code里面的内容，包括源ASCII编码和权值内容
     for(i=0;i<n;i++)
     {
-        //fscanf(fp,"%c %d %s\n",&code[i].ascii,&code[i].weight,code[i].code);
         fread(&code[i],sizeof(Code),1,fp);
     }
     
@@ -428,13 +388,11 @@ int readCode(Code *code,char *filename)
     HufNode h[2*n-1];
     initHuffTree(code,h,n);
     createHuffTree(h,n);
-    printHufTree(h,n);
     //临时的节点
     HufNode t;
     //判断文件到末尾没
     if(feof(fp))
     {
-        printf("return\n");
         return 0;   
     }
     //从源文件里面读出内容
@@ -444,13 +402,7 @@ int readCode(Code *code,char *filename)
     {
         k=k+256;
     }
-    printf("%d\n",k);
     Int_Binary(binary,k);
-    for(i=0;i<8;i++)
-    {
-        printf("%d",binary[i]);
-    }
-    printf("\n");
     t=h[2*n-2];
     sign++;
     index=2*n-2;
@@ -458,7 +410,6 @@ int readCode(Code *code,char *filename)
     {
         if(t.LChild ==0 && t.RChild ==0)
         {
-            printf("test2                      j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
             //判断文件到末尾没
             if(feof(fp))
             {
@@ -471,7 +422,6 @@ int readCode(Code *code,char *filename)
         }
         else
         {
-            printf("test j=%d index=%d binary[%d]=%d\n",j,index,j,binary[j]);
             if(binary[j]==0)
             {
                 index=t.LChild;
@@ -495,12 +445,7 @@ int readCode(Code *code,char *filename)
             {
                 k=k+256;
             }
-            printf("%d\n",k);
             Int_Binary(binary,k);
-            for(i=0;i<8;i++)
-            {
-                printf("%d",binary[i]);
-            }
             j=-1;
         }
     }
@@ -514,41 +459,22 @@ void compressFile(char *filename)
     bzero(Weight,sizeof(Weight));
     
     len=readFile(Weight,filename);
-    
-    for(i=0;i<256;i++)
-    {
-        if(Weight[i]!=0)
-        {
-            printf("%d\n",Weight[i]);
-        }
-    }
     n=countZero(Weight);
     m=2*n-1;
-    printf("n=%d len=%d\n",n,len);
     Code code[n];
-    char ascii_code[n][100];
+    char ascii_code[n][256];
     for(i=0;i<n;i++)
     {
         memset(ascii_code,'\0',sizeof(ascii_code));
     }
     countWeight(code,Weight);
-    for(i=0;i<n;i++)
-    {
-        printf("%d %d\n",code[i].ascii,code[i].weight);
-    }
-    
     HufNode h[m];
     initHuffTree(code,h,n);
     createHuffTree(h,n);
-    printHufTree(h,n);
     for(i=0;i<n;i++)
     {
         bzero(ascii_code[i],sizeof(ascii_code[i]));
         HuffmanCode(h,ascii_code[i],h[i],i);
-    }
-    for(i=0;i<n;i++)
-    {
-        printf("%c:%s\n",code[i].ascii,ascii_code[i]);
     }
     writeCode(code,ascii_code,n,len,filename);
 }
