@@ -142,6 +142,7 @@ void Int_Binary(int ascii_code[],int k)
         }
     }
 }
+
 int Binary_Int(int ascii_code[])
 {
     int i=7,j=0;
@@ -257,12 +258,13 @@ int Code_Index(Code *code,char ch,int n)
 {
     int i;
     for(i=0;i<n;i++)
+    {
+        if(ch==code[i].ascii)
         {
-            if(ch==code[i].ascii)
-            {
-                return i;
-            }
+            return i;
         }
+    }
+    return -1;
 }
 void writeCode(Code *code,char ascii_code[][100],int n,int len,char *filename)
 {
